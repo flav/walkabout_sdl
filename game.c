@@ -14,14 +14,18 @@
 
 #define PLAYER_SIZE 20
 
+enum {DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_EAST, DIR_WEST};
+
 typedef struct {
 	int x, y;
+	int direction;
+	int movement;
 } player_t;
 
 typedef struct {
 	int done;
 	player_t player;
-	SDL_Texture *player_image;
+	SDL_Texture *game_tiles;
 	SDL_Renderer *renderer;
 } game_t;
 
@@ -52,30 +56,46 @@ process_events(game_t *game) {
 		}
 	}
 
+	int is_moving = 0;
 	const Uint8 *state = SDL_GetKeyboardState(NULL);
 	if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_L]) {
+		is_moving = 1;
+		game->player.direction = DIR_EAST;
 		game->player.x += 20;
 		if (game->player.x > SCREEN_WIDTH - PLAYER_SIZE) {
 			game->player.x = SCREEN_WIDTH - PLAYER_SIZE;
 		}
 	}
 	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H]) {
+		is_moving = 1;
+		game->player.direction = DIR_WEST;
 		game->player.x -= PLAYER_SIZE;
 		if (game->player.x < 0) {
 			game->player.x = 0;
 		}
 	}
 	if (state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_K]) {
+		is_moving = 1;
+		game->player.direction = DIR_NORTH;
 		game->player.y -= PLAYER_SIZE;
 		if (game->player.y < 0) {
 			game->player.y = 0;
 		}
 	}
 	if (state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_J]) {
+		is_moving = 1;
+		game->player.direction = DIR_SOUTH;
 		game->player.y += PLAYER_SIZE;
 		if (game->player.y > SCREEN_HEIGHT - PLAYER_SIZE) {
 			game->player.y = SCREEN_HEIGHT - PLAYER_SIZE;
 		}
+	}
+
+	if (is_moving) {
+		game->player.movement = ++game->player.movement % 3;
+	} else {
+		game->player.movement = 0;
+		game->player.direction = DIR_NONE;
 	}
 
 	return 0;
@@ -89,16 +109,40 @@ render_game(SDL_Renderer *renderer, const game_t *game) {
 	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // blue(00,00,ff)
 	SDL_RenderClear(renderer);
 
-	// SDL_RenderCopy(renderer, game->player_image, NULL, NULL);
+	int col = 23;
+	int row = 0 + game->player.movement;
+	// W S N E
+	switch (game->player.direction) {
+		case DIR_WEST:
+			col += 0;
+			break;
+		case DIR_EAST:
+			col += 3;
+			break;
+		case DIR_NORTH:
+			col += 2;
+			break;
+		case DIR_SOUTH:
+			// fall through to default
+		default:
+			col += 1;
+			break;
+	}
 
-	SDL_Rect dest;
-	SDL_QueryTexture(game->player_image, NULL, NULL, &dest.w, &dest.h);
-	dest.x = game->player.x;
-	dest.y = game->player.y;
-	dest.w = dest.w * 4;
-	dest.h = dest.h * 4;
+	SDL_Rect source = {
+		.x = col * 16,
+		.y = row * 16,
+		.h = 16,
+		.w = 16
+	};
+	SDL_Rect dest = {
+		.x = game->player.x,
+		.y = game->player.y,
+		.h = source.h * 4,
+		.w = source.w * 4
+	};
 
-	SDL_RenderCopy(renderer, game->player_image, NULL, &dest);
+	SDL_RenderCopy(renderer, game->game_tiles, &source, &dest);
 
 
 	// SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // white(ff,ff,ff)
@@ -115,7 +159,7 @@ main_loop(void *arg) {
 
 	SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
-	SDL_Delay(60);
+	SDL_Delay(80);
 
 	render_game(game->renderer, game);
 
@@ -142,8 +186,10 @@ int main(int argc, char *argv[])
 	game_t game = {
 		.done = 0,
 		.player = {
-			55,
-			55
+			.x = 55,
+			.y = 55,
+			.direction = 0,
+			.movement = 0
 		}
 	};
 
@@ -158,16 +204,16 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	SDL_Surface *image = IMG_Load("resources/tile_0485.png");
+	SDL_Surface *image = IMG_Load("resources/tilemap_packed.png");
 	if (!image) {
 		printf("IMG_Load: %s\n", IMG_GetError());
 		return 0;
 	}
 
 	// SDL_Texture* tex = SDL_CreateTextureFromSurface(game.renderer, image);
-	game.player_image = SDL_CreateTextureFromSurface(game.renderer, image);
+	game.game_tiles = SDL_CreateTextureFromSurface(game.renderer, image);
 	SDL_FreeSurface(image);
-	if (!game.player_image) {
+	if (!game.game_tiles) {
 		fprintf(stderr, "SDL_CreateTextureFromSurface Error: %s\n", SDL_GetError());
 		return EXIT_FAILURE;
 	}
