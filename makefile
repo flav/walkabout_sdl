@@ -13,3 +13,6 @@ $(P): $(OBJECTS)
 wasm:
 	# EMSDK_QUIET=1 source "/Users/flav/source/otherstuff/languages/c/wasm/emsdk/emsdk_env.sh"
 	emcc game.c -O3 -s WASM=1 -s USE_SDL=2 -sUSE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'  --preload-file resources -s USE_SDL_TTF=2 -o index.js
+
+walk: wasm
+	scp index.* n0p.net:/home/n0p.net/www/html/walk

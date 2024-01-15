@@ -52,6 +52,10 @@ process_events(game_t *game) {
 				}
 				break;
 
+			case SDL_MOUSEMOTION:
+				// printf("mouse %i %i\n", e.motion.x, e.motion.y);
+				break;
+
 			default: {}
 		}
 	}
