@@ -20,7 +20,7 @@ enum {DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_EAST, DIR_WEST};
 typedef struct {
 	int x, y;
 	int direction;
-	int movement;
+	int animation_frame;
 } player_t;
 
 typedef struct {
@@ -90,16 +90,16 @@ process_events(game_t *game) {
 	if (state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_J] || state[SDL_SCANCODE_S]) {
 		is_moving = 1;
 		game->player.direction = DIR_SOUTH;
-		game->player.y += PLAYER_SIZE;
+		game->player.y += PLAYER_MOVEMENT;
 		if (game->player.y > SCREEN_HEIGHT - PLAYER_SIZE) {
 			game->player.y = SCREEN_HEIGHT - PLAYER_SIZE;
 		}
 	}
 
 	if (is_moving) {
-		game->player.movement = ++game->player.movement % 3;
+		game->player.animation_frame = ++game->player.animation_frame % 3;
 	} else {
-		game->player.movement = 0;
+		game->player.animation_frame = 0;
 		game->player.direction = DIR_NONE;
 	}
 
@@ -107,15 +107,9 @@ process_events(game_t *game) {
 }
 
 void
-render_game(SDL_Renderer *renderer, const game_t *game) {
-
-
-
-	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // blue(00,00,ff)
-	SDL_RenderClear(renderer);
-
+render_player(const game_t *game) {
 	int col = 23;
-	int row = 0 + game->player.movement;
+	int row = 0 + game->player.animation_frame;
 	// W S N E
 	switch (game->player.direction) {
 		case DIR_WEST:
@@ -147,12 +141,19 @@ render_game(SDL_Renderer *renderer, const game_t *game) {
 		.w = source.w * 4
 	};
 
-	SDL_RenderCopy(renderer, game->game_tiles, &source, &dest);
+	SDL_RenderCopy(game->renderer, game->game_tiles, &source, &dest);
+}
 
+void
+render_game(const game_t *game) {
+	SDL_Renderer *renderer = game->renderer;
 
-	// SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // white(ff,ff,ff)
-	// SDL_Rect rect = {game->player.x, game->player.y, PLAYER_SIZE, PLAYER_SIZE };
-	// SDL_RenderFillRect(renderer, &rect);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // blue(00,00,ff)
+	SDL_RenderClear(renderer);
+
+	render_player(game);
+
+	SDL_RenderPresent(game->renderer);
 }
 
 // main_loop(game_t *game) {
@@ -160,15 +161,15 @@ void
 main_loop(void *arg) {
 	game_t *game = arg;
 
+	// Do event loop
 	game->done = process_events(game);
 
-	SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
+	// Do physics loop
+
+	// Do rendering loop
+	render_game(game);
 
 	SDL_Delay(80);
-
-	render_game(game->renderer, game);
-
-	SDL_RenderPresent(game->renderer);
 }
 
 int main(int argc, char *argv[])
@@ -194,7 +195,7 @@ int main(int argc, char *argv[])
 			.x = 55,
 			.y = 55,
 			.direction = 0,
-			.movement = 0
+			.animation_frame = 0
 		}
 	};
 
