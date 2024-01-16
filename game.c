@@ -13,6 +13,7 @@
 #define SCREEN_HEIGHT 480
 
 #define PLAYER_SIZE 20
+#define PLAYER_MOVEMENT 10
 
 enum {DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_EAST, DIR_WEST};
 
@@ -65,7 +66,7 @@ process_events(game_t *game) {
 	if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_L] || state[SDL_SCANCODE_D]) {
 		is_moving = 1;
 		game->player.direction = DIR_EAST;
-		game->player.x += 20;
+		game->player.x += PLAYER_MOVEMENT;
 		if (game->player.x > SCREEN_WIDTH - PLAYER_SIZE) {
 			game->player.x = SCREEN_WIDTH - PLAYER_SIZE;
 		}
@@ -73,7 +74,7 @@ process_events(game_t *game) {
 	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H] || state[SDL_SCANCODE_A]) {
 		is_moving = 1;
 		game->player.direction = DIR_WEST;
-		game->player.x -= PLAYER_SIZE;
+		game->player.x -= PLAYER_MOVEMENT;
 		if (game->player.x < 0) {
 			game->player.x = 0;
 		}
@@ -81,7 +82,7 @@ process_events(game_t *game) {
 	if (state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_K] || state[SDL_SCANCODE_W]) {
 		is_moving = 1;
 		game->player.direction = DIR_NORTH;
-		game->player.y -= PLAYER_SIZE;
+		game->player.y -= PLAYER_MOVEMENT;
 		if (game->player.y < 0) {
 			game->player.y = 0;
 		}
