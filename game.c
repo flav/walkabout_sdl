@@ -62,7 +62,7 @@ process_events(game_t *game) {
 
 	int is_moving = 0;
 	const Uint8 *state = SDL_GetKeyboardState(NULL);
-	if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_L]) {
+	if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_L] || state[SDL_SCANCODE_D]) {
 		is_moving = 1;
 		game->player.direction = DIR_EAST;
 		game->player.x += 20;
@@ -70,7 +70,7 @@ process_events(game_t *game) {
 			game->player.x = SCREEN_WIDTH - PLAYER_SIZE;
 		}
 	}
-	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H]) {
+	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H] || state[SDL_SCANCODE_A]) {
 		is_moving = 1;
 		game->player.direction = DIR_WEST;
 		game->player.x -= PLAYER_SIZE;
@@ -78,7 +78,7 @@ process_events(game_t *game) {
 			game->player.x = 0;
 		}
 	}
-	if (state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_K]) {
+	if (state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_K] || state[SDL_SCANCODE_W]) {
 		is_moving = 1;
 		game->player.direction = DIR_NORTH;
 		game->player.y -= PLAYER_SIZE;
@@ -86,7 +86,7 @@ process_events(game_t *game) {
 			game->player.y = 0;
 		}
 	}
-	if (state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_J]) {
+	if (state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_J] || state[SDL_SCANCODE_S]) {
 		is_moving = 1;
 		game->player.direction = DIR_SOUTH;
 		game->player.y += PLAYER_SIZE;
