@@ -174,8 +174,8 @@ render_player(const game_t *game) {
 		.w = 16
 	};
 	SDL_Rect dest = {
-		.x = game->player.x - game->camera.x,
-		.y = game->player.y - game->camera.y,
+		.x = game->player.x - game->camera.x - PLAYER_SIZE / 2,
+		.y = game->player.y - game->camera.y - PLAYER_SIZE / 2,
 		.h = source.h * TILE_SIZE_MULTIPLIER,
 		.w = source.w * TILE_SIZE_MULTIPLIER
 	};
@@ -249,6 +249,21 @@ render_game(const game_t *game) {
 
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 		SDL_RenderDrawRect(renderer, &rect);
+
+		SDL_RenderDrawLine(
+			renderer,
+			SCREEN_WIDTH / 2,
+			0,
+			SCREEN_WIDTH / 2,
+			SCREEN_HEIGHT
+		);
+		SDL_RenderDrawLine(
+			renderer,
+			0,
+			SCREEN_HEIGHT / 2,
+			SCREEN_WIDTH,
+			SCREEN_HEIGHT / 2
+		);
 	}
 
 	SDL_RenderPresent(game->renderer);
