@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -15,6 +16,13 @@
 #define PLAYER_SIZE 20
 #define PLAYER_MOVEMENT 10
 
+#define TILE_COLUMNS 27
+#define TILE_SIZE 16
+
+#define WORLD_WIDTH 80
+#define WORLD_HEIGHT 80
+#define WORLD_SIZE WORLD_WIDTH * WORLD_HEIGHT
+
 enum {DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_EAST, DIR_WEST};
 
 typedef struct {
@@ -24,10 +32,16 @@ typedef struct {
 } player_t;
 
 typedef struct {
+	int tiles[WORLD_SIZE];
+} world_layer;
+
+typedef struct {
 	int done;
 	player_t player;
 	SDL_Texture *game_tiles;
 	SDL_Renderer *renderer;
+	world_layer map;
+	world_layer overlay;
 } game_t;
 
 int
@@ -145,12 +159,48 @@ render_player(const game_t *game) {
 }
 
 void
+render_tile(const game_t *game, int tile, int x, int y) {
+	int col = tile % TILE_COLUMNS;
+	double row = floor(tile / TILE_COLUMNS);
+
+	SDL_Rect source = {
+		.x = col * 16,
+		.y = row * 16,
+		.h = 16,
+		.w = 16
+	};
+	SDL_Rect dest = {
+		.x = x,
+		.y = y,
+		.h = source.h * 4,
+		.w = source.w * 4
+	};
+
+	SDL_RenderCopy(game->renderer, game->game_tiles, &source, &dest);
+}
+
+void
+render_map(const game_t *game) {
+	for(int i = 0; i < 120; ++i) {
+		int col = i % TILE_COLUMNS;
+		double row = floor(i / TILE_COLUMNS);
+
+		render_tile(game, game->map.tiles[i], col * TILE_SIZE * 4, row * TILE_SIZE * 4);
+
+		if (game->overlay.tiles[i]) {
+			render_tile(game, game->overlay.tiles[i], col * TILE_SIZE * 4, row * TILE_SIZE * 4);
+		}
+	}
+}
+
+void
 render_game(const game_t *game) {
 	SDL_Renderer *renderer = game->renderer;
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // blue(00,00,ff)
 	SDL_RenderClear(renderer);
 
+	render_map(game);
 	render_player(game);
 
 	SDL_RenderPresent(game->renderer);
@@ -199,6 +249,19 @@ int main(int argc, char *argv[])
 		}
 	};
 
+	srand(141);
+	for(int i = 0; i < WORLD_SIZE; ++i) {
+		game.map.tiles[i] = 28;
+
+		game.overlay.tiles[i] = 0;
+		if (rand() % 30 == 0) {
+			game.overlay.tiles[i] = 373;
+		}
+
+		if (rand() % 50 == 0) {
+			game.overlay.tiles[i] = 372;
+		}
+	}
 
 	// SDL_Renderer *renderer = SDL_CreateRenderer(window, -1,
 	game.renderer = SDL_CreateRenderer(window, -1,
