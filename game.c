@@ -13,15 +13,19 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-#define PLAYER_SIZE 20
-#define PLAYER_MOVEMENT 10
-
 #define TILE_COLUMNS 27
 #define TILE_SIZE 16
 
-#define WORLD_WIDTH 80
-#define WORLD_HEIGHT 80
-#define WORLD_SIZE WORLD_WIDTH * WORLD_HEIGHT
+#define TILE_SIZE_MULTIPLIER 4
+
+#define PLAYER_SIZE TILE_SIZE * TILE_SIZE_MULTIPLIER
+#define PLAYER_MOVEMENT 10
+
+#define WORLD_WIDTH_TILES 80
+#define WORLD_HEIGHT_TILES 80
+#define WORLD_WIDTH WORLD_WIDTH_TILES * 16
+#define WORLD_HEIGHT WORLD_HEIGHT_TILES * 16
+#define WORLD_TILE_SIZE WORLD_WIDTH_TILES * WORLD_HEIGHT_TILES
 
 enum {DIR_NONE, DIR_NORTH, DIR_SOUTH, DIR_EAST, DIR_WEST};
 
@@ -32,7 +36,7 @@ typedef struct {
 } player_t;
 
 typedef struct {
-	int tiles[WORLD_SIZE];
+	int tiles[WORLD_TILE_SIZE];
 } world_layer;
 
 typedef struct {
@@ -42,6 +46,8 @@ typedef struct {
 	SDL_Renderer *renderer;
 	world_layer map;
 	world_layer overlay;
+	SDL_Rect camera;
+	int debug;
 } game_t;
 
 int
@@ -63,6 +69,9 @@ process_events(game_t *game) {
 						case SDLK_q:
 							return 1;
 							break;
+						case SDLK_p:
+							game->debug = !game->debug;
+							break;
 					}
 				}
 				break;
@@ -81,8 +90,8 @@ process_events(game_t *game) {
 		is_moving = 1;
 		game->player.direction = DIR_EAST;
 		game->player.x += PLAYER_MOVEMENT;
-		if (game->player.x > SCREEN_WIDTH - PLAYER_SIZE) {
-			game->player.x = SCREEN_WIDTH - PLAYER_SIZE;
+		if (game->player.x > WORLD_WIDTH - PLAYER_SIZE) {
+			game->player.x = WORLD_WIDTH - PLAYER_SIZE;
 		}
 	}
 	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H] || state[SDL_SCANCODE_A]) {
@@ -105,8 +114,8 @@ process_events(game_t *game) {
 		is_moving = 1;
 		game->player.direction = DIR_SOUTH;
 		game->player.y += PLAYER_MOVEMENT;
-		if (game->player.y > SCREEN_HEIGHT - PLAYER_SIZE) {
-			game->player.y = SCREEN_HEIGHT - PLAYER_SIZE;
+		if (game->player.y > WORLD_HEIGHT - PLAYER_SIZE) {
+			game->player.y = WORLD_HEIGHT - PLAYER_SIZE;
 		}
 	}
 
@@ -115,6 +124,22 @@ process_events(game_t *game) {
 	} else {
 		game->player.animation_frame = 0;
 		game->player.direction = DIR_NONE;
+	}
+
+	game->camera.x = game->player.x - SCREEN_WIDTH / 2;
+	game->camera.y = game->player.y - SCREEN_HEIGHT / 2;
+
+	if (game->camera.x < 0) {
+		game->camera.x = 0;
+	}
+	if (game->camera.x > WORLD_WIDTH - SCREEN_WIDTH) {
+		game->camera.x = WORLD_WIDTH - SCREEN_WIDTH;
+	}
+	if (game->camera.y < 0) {
+		game->camera.y = 0;
+	}
+	if (game->camera.y > WORLD_HEIGHT - SCREEN_HEIGHT) {
+		game->camera.y = WORLD_HEIGHT - SCREEN_HEIGHT;
 	}
 
 	return 0;
@@ -149,10 +174,10 @@ render_player(const game_t *game) {
 		.w = 16
 	};
 	SDL_Rect dest = {
-		.x = game->player.x,
-		.y = game->player.y,
-		.h = source.h * 4,
-		.w = source.w * 4
+		.x = game->player.x - game->camera.x,
+		.y = game->player.y - game->camera.y,
+		.h = source.h * TILE_SIZE_MULTIPLIER,
+		.w = source.w * TILE_SIZE_MULTIPLIER
 	};
 
 	SDL_RenderCopy(game->renderer, game->game_tiles, &source, &dest);
@@ -170,10 +195,10 @@ render_tile(const game_t *game, int tile, int x, int y) {
 		.w = 16
 	};
 	SDL_Rect dest = {
-		.x = x,
-		.y = y,
-		.h = source.h * 4,
-		.w = source.w * 4
+		.x = x - game->camera.x,
+		.y = y - game->camera.y,
+		.h = source.h * TILE_SIZE_MULTIPLIER,
+		.w = source.w * TILE_SIZE_MULTIPLIER
 	};
 
 	SDL_RenderCopy(game->renderer, game->game_tiles, &source, &dest);
@@ -181,14 +206,24 @@ render_tile(const game_t *game, int tile, int x, int y) {
 
 void
 render_map(const game_t *game) {
-	for(int i = 0; i < 120; ++i) {
+	for(int i = 0; i < WORLD_TILE_SIZE; ++i) {
 		int col = i % TILE_COLUMNS;
 		double row = floor(i / TILE_COLUMNS);
 
-		render_tile(game, game->map.tiles[i], col * TILE_SIZE * 4, row * TILE_SIZE * 4);
+		render_tile(
+			game,
+			game->map.tiles[i],
+			col * TILE_SIZE * TILE_SIZE_MULTIPLIER,
+			row * TILE_SIZE * TILE_SIZE_MULTIPLIER
+		);
 
 		if (game->overlay.tiles[i]) {
-			render_tile(game, game->overlay.tiles[i], col * TILE_SIZE * 4, row * TILE_SIZE * 4);
+			render_tile(
+				game,
+				game->overlay.tiles[i],
+				col * TILE_SIZE * TILE_SIZE_MULTIPLIER,
+				row * TILE_SIZE * TILE_SIZE_MULTIPLIER
+			);
 		}
 	}
 }
@@ -202,6 +237,19 @@ render_game(const game_t *game) {
 
 	render_map(game);
 	render_player(game);
+
+	if (game->debug) {
+		int padding = 10;
+		SDL_Rect rect = {
+			.x = padding - game->camera.x,
+			.y = padding - game->camera.y,
+			.w = WORLD_WIDTH - (padding * 2),
+			.h = WORLD_HEIGHT - (padding * 2)
+		};
+
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+		SDL_RenderDrawRect(renderer, &rect);
+	}
 
 	SDL_RenderPresent(game->renderer);
 }
@@ -241,16 +289,17 @@ int main(int argc, char *argv[])
 
 	game_t game = {
 		.done = 0,
+		.debug = 0,
 		.player = {
-			.x = 55,
-			.y = 55,
+			.x = 400,
+			.y = 400,
 			.direction = 0,
 			.animation_frame = 0
 		}
 	};
 
 	srand(141);
-	for(int i = 0; i < WORLD_SIZE; ++i) {
+	for(int i = 0; i < WORLD_TILE_SIZE; ++i) {
 		game.map.tiles[i] = 28;
 
 		game.overlay.tiles[i] = 0;
