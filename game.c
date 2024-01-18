@@ -50,6 +50,30 @@ typedef struct {
 	int debug;
 } game_t;
 
+
+int
+calculate_player_tile(const game_t * game) {
+	// player tile
+	int col = floor(game->player.x / (TILE_SIZE * TILE_SIZE_MULTIPLIER));
+	int row = floor(game->player.y / (TILE_SIZE * TILE_SIZE_MULTIPLIER));
+	int player_tile_location = row * TILE_COLUMNS + col;
+
+	if (game->debug) {
+		printf(
+			"Position: %d %d tile: %d\n",
+			game->player.x,
+			game->player.y,
+			player_tile_location
+		);
+	}
+	return player_tile_location;
+}
+
+int
+overlay_collision(const game_t * game) {
+	return game->overlay.tiles[calculate_player_tile(game)];
+}
+
 int
 process_events(game_t *game) {
 	SDL_Event e;
@@ -85,11 +109,17 @@ process_events(game_t *game) {
 	}
 
 	int is_moving = 0;
+	int last_position = 0;
 	const Uint8 *state = SDL_GetKeyboardState(NULL);
 	if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_L] || state[SDL_SCANCODE_D]) {
 		is_moving = 1;
 		game->player.direction = DIR_EAST;
+
+		last_position = game->player.x;
 		game->player.x += PLAYER_MOVEMENT;
+		if (overlay_collision(game)) {
+			game->player.x = last_position;
+		}
 		if (game->player.x > WORLD_WIDTH - PLAYER_SIZE) {
 			game->player.x = WORLD_WIDTH - PLAYER_SIZE;
 		}
@@ -97,7 +127,12 @@ process_events(game_t *game) {
 	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H] || state[SDL_SCANCODE_A]) {
 		is_moving = 1;
 		game->player.direction = DIR_WEST;
+
+		last_position = game->player.x;
 		game->player.x -= PLAYER_MOVEMENT;
+		if (overlay_collision(game)) {
+			game->player.x = last_position;
+		}
 		if (game->player.x < 0) {
 			game->player.x = 0;
 		}
@@ -105,7 +140,12 @@ process_events(game_t *game) {
 	if (state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_K] || state[SDL_SCANCODE_W]) {
 		is_moving = 1;
 		game->player.direction = DIR_NORTH;
+
+		last_position = game->player.y;
 		game->player.y -= PLAYER_MOVEMENT;
+		if (overlay_collision(game)) {
+			game->player.y = last_position;
+		}
 		if (game->player.y < 0) {
 			game->player.y = 0;
 		}
@@ -113,7 +153,12 @@ process_events(game_t *game) {
 	if (state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_J] || state[SDL_SCANCODE_S]) {
 		is_moving = 1;
 		game->player.direction = DIR_SOUTH;
+
+		last_position = game->player.y;
 		game->player.y += PLAYER_MOVEMENT;
+		if (overlay_collision(game)) {
+			game->player.y = last_position;
+		}
 		if (game->player.y > WORLD_HEIGHT - PLAYER_SIZE) {
 			game->player.y = WORLD_HEIGHT - PLAYER_SIZE;
 		}
@@ -202,6 +247,11 @@ render_tile(const game_t *game, int tile, int x, int y) {
 	};
 
 	SDL_RenderCopy(game->renderer, game->game_tiles, &source, &dest);
+
+	if (game->debug) {
+		SDL_SetRenderDrawColor(game->renderer, 255, 0, 0, 255);
+		SDL_RenderDrawRect(game->renderer, &dest);
+	}
 }
 
 void
@@ -318,11 +368,9 @@ int main(int argc, char *argv[])
 		game.map.tiles[i] = 28;
 
 		game.overlay.tiles[i] = 0;
-		if (rand() % 30 == 0) {
+		if (rand() % 10 == 0) {
 			game.overlay.tiles[i] = 373;
-		}
-
-		if (rand() % 50 == 0) {
+		} else if (rand() % 10 == 0) {
 			game.overlay.tiles[i] = 372;
 		}
 	}
