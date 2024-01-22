@@ -50,6 +50,12 @@ typedef struct {
 	int debug;
 } game_t;
 
+int
+calculate_tile(int x, int y) {
+	int col = floor(x / (TILE_SIZE * TILE_SIZE_MULTIPLIER));
+	int row = floor(y / (TILE_SIZE * TILE_SIZE_MULTIPLIER));
+	return row * TILE_COLUMNS + col;
+}
 
 int
 calculate_player_tile(const game_t * game, int based_on_feet) {
@@ -59,9 +65,10 @@ calculate_player_tile(const game_t * game, int based_on_feet) {
 	}
 
 	// player tile
-	int col = floor(game->player.x / (TILE_SIZE * TILE_SIZE_MULTIPLIER));
-	int row = floor((game->player.y + add_for_feet)/ (TILE_SIZE * TILE_SIZE_MULTIPLIER));
-	int player_tile_location = row * TILE_COLUMNS + col;
+	int player_tile_location = calculate_tile(
+		game->player.x,
+		game->player.y + add_for_feet
+	);
 
 	return player_tile_location;
 }
@@ -264,7 +271,13 @@ void
 render_map(const game_t *game) {
 	int player_tile = calculate_player_tile(game, 1);
 
-	for(int i = 0; i < WORLD_TILE_SIZE; ++i) {
+	int upper_left = calculate_tile(game->camera.x, game->camera.y);
+	int bottom_right = calculate_tile(
+		game->camera.x + SCREEN_WIDTH,
+		game->camera.y + SCREEN_HEIGHT
+	);
+
+	for(int i = upper_left; i <= bottom_right; ++i) {
 		int col = i % TILE_COLUMNS;
 		double row = floor(i / TILE_COLUMNS);
 
@@ -276,7 +289,7 @@ render_map(const game_t *game) {
 		);
 	}
 
-	for (int i = 0; i < WORLD_TILE_SIZE; ++i) {
+	for(int i = upper_left; i <= bottom_right; ++i) {
 		int col = i % TILE_COLUMNS;
 		double row = floor(i / TILE_COLUMNS);
 
