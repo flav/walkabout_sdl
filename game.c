@@ -116,32 +116,6 @@ process_events(game_t *game) {
 	int is_moving = 0;
 	int last_position = 0;
 	const Uint8 *state = SDL_GetKeyboardState(NULL);
-	if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_L] || state[SDL_SCANCODE_D]) {
-		is_moving = 1;
-		game->player.direction = DIR_EAST;
-
-		last_position = game->player.x;
-		game->player.x += PLAYER_MOVEMENT;
-		if (overlay_collision(game)) {
-			game->player.x = last_position;
-		}
-		if (game->player.x > WORLD_WIDTH - PLAYER_SIZE) {
-			game->player.x = WORLD_WIDTH - PLAYER_SIZE;
-		}
-	}
-	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H] || state[SDL_SCANCODE_A]) {
-		is_moving = 1;
-		game->player.direction = DIR_WEST;
-
-		last_position = game->player.x;
-		game->player.x -= PLAYER_MOVEMENT;
-		if (overlay_collision(game)) {
-			game->player.x = last_position;
-		}
-		if (game->player.x < 0) {
-			game->player.x = 0;
-		}
-	}
 	if (state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_K] || state[SDL_SCANCODE_W]) {
 		is_moving = 1;
 		game->player.direction = DIR_NORTH;
@@ -166,6 +140,32 @@ process_events(game_t *game) {
 		}
 		if (game->player.y > WORLD_HEIGHT - PLAYER_SIZE) {
 			game->player.y = WORLD_HEIGHT - PLAYER_SIZE;
+		}
+	}
+	if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_L] || state[SDL_SCANCODE_D]) {
+		is_moving = 1;
+		game->player.direction = DIR_EAST;
+
+		last_position = game->player.x;
+		game->player.x += PLAYER_MOVEMENT;
+		if (overlay_collision(game)) {
+			game->player.x = last_position;
+		}
+		if (game->player.x > WORLD_WIDTH - PLAYER_SIZE) {
+			game->player.x = WORLD_WIDTH - PLAYER_SIZE;
+		}
+	}
+	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H] || state[SDL_SCANCODE_A]) {
+		is_moving = 1;
+		game->player.direction = DIR_WEST;
+
+		last_position = game->player.x;
+		game->player.x -= PLAYER_MOVEMENT;
+		if (overlay_collision(game)) {
+			game->player.x = last_position;
+		}
+		if (game->player.x < 0) {
+			game->player.x = 0;
 		}
 	}
 
