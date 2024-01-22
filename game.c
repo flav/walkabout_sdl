@@ -63,14 +63,6 @@ calculate_player_tile(const game_t * game, int based_on_feet) {
 	int row = floor((game->player.y + add_for_feet)/ (TILE_SIZE * TILE_SIZE_MULTIPLIER));
 	int player_tile_location = row * TILE_COLUMNS + col;
 
-	if (game->debug) {
-		printf(
-			"Position: %d %d tile: %d\n",
-			game->player.x,
-			game->player.y,
-			player_tile_location
-		);
-	}
 	return player_tile_location;
 }
 
@@ -171,6 +163,15 @@ process_events(game_t *game) {
 
 	if (is_moving) {
 		game->player.animation_frame = ++game->player.animation_frame % 3;
+		if (game->debug) {
+			printf(
+				"Position: %d %d tile: %d\n",
+				game->player.x,
+				game->player.y,
+				calculate_player_tile(game, 0)
+			);
+		}
+
 	} else {
 		game->player.animation_frame = 0;
 		game->player.direction = DIR_NONE;
