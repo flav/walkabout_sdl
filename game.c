@@ -125,8 +125,8 @@ process_events(game_t *game) {
 		if (overlay_collision(game)) {
 			game->player.y = last_position;
 		}
-		if (game->player.y < 0) {
-			game->player.y = 0;
+		if (game->player.y < PLAYER_SIZE / 2) {
+			game->player.y = PLAYER_SIZE / 2;
 		}
 	}
 	if (state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_J] || state[SDL_SCANCODE_S]) {
@@ -138,8 +138,8 @@ process_events(game_t *game) {
 		if (overlay_collision(game)) {
 			game->player.y = last_position;
 		}
-		if (game->player.y > WORLD_HEIGHT - PLAYER_SIZE) {
-			game->player.y = WORLD_HEIGHT - PLAYER_SIZE;
+		if (game->player.y > WORLD_HEIGHT - PLAYER_SIZE / 2) {
+			game->player.y = WORLD_HEIGHT - PLAYER_SIZE / 2;
 		}
 	}
 	if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_L] || state[SDL_SCANCODE_D]) {
@@ -151,8 +151,8 @@ process_events(game_t *game) {
 		if (overlay_collision(game)) {
 			game->player.x = last_position;
 		}
-		if (game->player.x > WORLD_WIDTH - PLAYER_SIZE) {
-			game->player.x = WORLD_WIDTH - PLAYER_SIZE;
+		if (game->player.x > WORLD_WIDTH - PLAYER_SIZE / 2) {
+			game->player.x = WORLD_WIDTH - PLAYER_SIZE / 2;
 		}
 	}
 	if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_H] || state[SDL_SCANCODE_A]) {
@@ -164,8 +164,8 @@ process_events(game_t *game) {
 		if (overlay_collision(game)) {
 			game->player.x = last_position;
 		}
-		if (game->player.x < 0) {
-			game->player.x = 0;
+		if (game->player.x < PLAYER_SIZE / 2) {
+			game->player.x = PLAYER_SIZE / 2;
 		}
 	}
 
