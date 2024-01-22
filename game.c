@@ -52,10 +52,15 @@ typedef struct {
 
 
 int
-calculate_player_tile(const game_t * game) {
+calculate_player_tile(const game_t * game, int based_on_feet) {
+	int add_for_feet = 0;
+	if (based_on_feet) {
+		add_for_feet = PLAYER_SIZE / 2;
+	}
+
 	// player tile
 	int col = floor(game->player.x / (TILE_SIZE * TILE_SIZE_MULTIPLIER));
-	int row = floor(game->player.y / (TILE_SIZE * TILE_SIZE_MULTIPLIER));
+	int row = floor((game->player.y + add_for_feet)/ (TILE_SIZE * TILE_SIZE_MULTIPLIER));
 	int player_tile_location = row * TILE_COLUMNS + col;
 
 	if (game->debug) {
@@ -71,7 +76,7 @@ calculate_player_tile(const game_t * game) {
 
 int
 overlay_collision(const game_t * game) {
-	return game->overlay.tiles[calculate_player_tile(game)];
+	return game->overlay.tiles[calculate_player_tile(game, 0)];
 }
 
 int
@@ -256,6 +261,8 @@ render_tile(const game_t *game, int tile, int x, int y) {
 
 void
 render_map(const game_t *game) {
+	int player_tile = calculate_player_tile(game, 1);
+
 	for(int i = 0; i < WORLD_TILE_SIZE; ++i) {
 		int col = i % TILE_COLUMNS;
 		double row = floor(i / TILE_COLUMNS);
@@ -266,6 +273,15 @@ render_map(const game_t *game) {
 			col * TILE_SIZE * TILE_SIZE_MULTIPLIER,
 			row * TILE_SIZE * TILE_SIZE_MULTIPLIER
 		);
+	}
+
+	for (int i = 0; i < WORLD_TILE_SIZE; ++i) {
+		int col = i % TILE_COLUMNS;
+		double row = floor(i / TILE_COLUMNS);
+
+		if (player_tile == i) {
+			render_player(game);
+		}
 
 		if (game->overlay.tiles[i]) {
 			render_tile(
@@ -286,7 +302,7 @@ render_game(const game_t *game) {
 	SDL_RenderClear(renderer);
 
 	render_map(game);
-	render_player(game);
+	// render_player(game);
 
 	if (game->debug) {
 		int padding = 10;
@@ -364,7 +380,7 @@ int main(int argc, char *argv[])
 	};
 
 	srand(141);
-	for(int i = 0; i < WORLD_TILE_SIZE; ++i) {
+	for (int i = 0; i < WORLD_TILE_SIZE; ++i) {
 		game.map.tiles[i] = 28;
 
 		game.overlay.tiles[i] = 0;
